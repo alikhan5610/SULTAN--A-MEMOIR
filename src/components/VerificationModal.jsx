@@ -9,17 +9,17 @@ export default function VerificationModal() {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloadError, setDownloadError] = useState('');
 
-  if (!activeOrder && !isAdminOpen) return null;
+  if (!isAdminOpen) return null;
 
   const handleSimulateApproval = async () => {
     setIsVerifying(true);
-    await verifyPayment(activeOrder.orderId, true, true);
+    await verifyPayment(activeOrder?.orderId, true, true);
     setIsVerifying(false);
   };
 
   const handleSimulateRejection = async () => {
     setIsVerifying(true);
-    await verifyPayment(activeOrder.orderId, false, true);
+    await verifyPayment(activeOrder?.orderId, false, true);
     setIsVerifying(false);
   };
 
@@ -109,37 +109,51 @@ export default function VerificationModal() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px'
+        padding: 'clamp(10px, 3vw, 20px)',
+        boxSizing: 'border-box',
+        overflowX: 'hidden'
       }}
+      onClick={() => setIsAdminOpen(false)}
     >
       <div
         style={{
           width: '100%',
-          maxWidth: '560px',
+          maxWidth: 'min(560px, 100%)',
           maxHeight: '92vh',
           overflowY: 'auto',
+          overflowX: 'hidden',
           backgroundColor: '#021404',
           border: '1px solid var(--gold-border)',
           borderRadius: '12px',
           boxShadow: '0 30px 100px rgba(0, 0, 0, 0.98)',
-          padding: '36px',
+          padding: 'clamp(20px, 4vw, 32px)',
+          boxSizing: 'border-box',
           position: 'relative'
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         <button
+          type="button"
           onClick={() => setIsAdminOpen(false)}
           style={{
             position: 'absolute',
-            top: '20px',
-            right: '20px',
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--text-dim)',
-            cursor: 'pointer'
+            top: '16px',
+            right: '16px',
+            background: 'rgba(255, 255, 255, 0.06)',
+            border: '1px solid rgba(212, 175, 55, 0.2)',
+            borderRadius: '50%',
+            width: '36px',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--ivory-white)',
+            cursor: 'pointer',
+            zIndex: 10
           }}
           aria-label="Close"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
 
         {activeOrder ? (
