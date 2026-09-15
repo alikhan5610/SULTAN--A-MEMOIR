@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /server/
+Disallow: /api/download
+
+Sitemap: https://sultan-a-memoir.pk/sitemap.xml

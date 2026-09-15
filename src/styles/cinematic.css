@@ -1,0 +1,318 @@
+/* ==========================================================================
+   Cinematic Visual Environment & Layout Styling
+   Persistent, Stationary Wasim Akram Green Uniform Backbone
+   ========================================================================== */
+
+/* Fixed Stationary Background Root */
+.cinematic-fixed-bg-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background-color: var(--pk-green-pitch-black);
+}
+
+/* Massive Persistent Wasim Akram Frame — Extends through the full scroll experience */
+.wasim-stationary-frame {
+  position: absolute;
+  top: 35px;
+  right: clamp(-300px, -10vw, -60px);
+  width: clamp(1400px, 135vw, 2100px);
+  aspect-ratio: 1 / 1;
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform, opacity;
+  transition: opacity 0.25s ease-out;
+}
+
+/* Massive Wasim Figure Image — Scaled far beyond viewport so user scrolls through body */
+.wasim-stationary-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: top center;
+  filter: contrast(1.15) saturate(1.16) brightness(0.96);
+  /* Atmospheric feathering at outer perimeter */
+  mask-image: radial-gradient(ellipse at 50% 48%, black 60%, rgba(0, 0, 0, 0.72) 80%, transparent 97%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 48%, black 60%, rgba(0, 0, 0, 0.72) 80%, transparent 97%);
+}
+
+/* Ambient backlight glow and rim lighting behind Wasim */
+.wasim-figure-feather {
+  position: absolute;
+  top: 2%;
+  left: 15%;
+  width: 70%;
+  height: 70%;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(87, 143, 6, 0.35) 0%, rgba(5, 93, 9, 0.16) 45%, transparent 72%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Left Scrim for Text Readability — Protects hero & section text while keeping Wasim vibrant */
+.cinematic-left-scrim {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60vw;
+  height: 100vh;
+  background: linear-gradient(
+    to right,
+    rgba(1, 14, 3, 0.98) 0%,
+    rgba(2, 23, 5, 0.92) 36%,
+    rgba(2, 23, 5, 0.58) 64%,
+    rgba(2, 23, 5, 0.12) 84%,
+    transparent 100%
+  );
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Global Vignette */
+.cinematic-vignette-global {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 55% 40%,
+    transparent 20%,
+    rgba(2, 23, 5, 0.45) 70%,
+    rgba(1, 14, 3, 0.95) 100%
+  );
+  z-index: 3;
+  pointer-events: none;
+}
+
+.cinematic-overlay-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 16vh;
+  background: linear-gradient(to bottom, rgba(1, 14, 3, 0.92) 0%, transparent 100%);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.cinematic-overlay-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 24vh;
+  background: linear-gradient(to top, rgba(1, 14, 3, 0.98) 0%, rgba(2, 23, 5, 0.5) 60%, transparent 100%);
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* Subtle Pakistan Crest Watermark */
+.cinematic-crest-watermark {
+  position: absolute;
+  left: -5%;
+  bottom: 10%;
+  width: 500px;
+  height: 500px;
+  opacity: 0.035;
+  pointer-events: none;
+  background: url('/assets/pakistan-star.jpg') no-repeat center center;
+  background-size: contain;
+  filter: drop-shadow(0 0 50px rgba(5, 93, 9, 0.5));
+  z-index: 1;
+}
+
+/* Mobile & Tablet Responsive Adjustments for Massive Persistent Background */
+@media (max-width: 1024px) {
+  .wasim-stationary-frame {
+    width: clamp(650px, 145vw, 950px);
+    right: auto;
+    left: 50%;
+    top: 30px;
+    transform: translate3d(-50%, var(--wasim-translate-y, 0px), 0) !important;
+  }
+  .wasim-stationary-img {
+    object-position: top center;
+  }
+  .cinematic-left-scrim {
+    width: 100vw;
+    background: linear-gradient(
+      to bottom,
+      rgba(1, 14, 3, 0.22) 0%,
+      rgba(1, 14, 3, 0.72) 42%,
+      rgba(1, 14, 3, 0.96) 82%
+    );
+  }
+}
+
+/* ==========================================================================
+   Hero Section Content Layout
+   Editorial typography on the left, letting stationary Wasim shine through
+   ========================================================================== */
+.hero-content-wrapper {
+  max-width: 720px;
+  position: relative;
+  z-index: 10;
+}
+
+@media (max-width: 1024px) {
+  .hero-content-wrapper {
+    max-width: 100%;
+    margin-top: 38vh;
+    text-align: center;
+  }
+  .hero-content-wrapper .hero-badge {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero-content-wrapper p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero-action-buttons {
+    justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   Creator Editorial Portrait Layout
+   Preserves 100% of creator's head, face and shoulders
+   ========================================================================== */
+.creator-editorial-layout {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 44px;
+  align-items: center;
+}
+
+.creator-card-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.creator-photo-wrapper {
+  position: relative;
+  width: 190px;
+  height: 265px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid var(--gold-primary);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(212, 175, 55, 0.25);
+  background-color: #1a2520;
+}
+
+.creator-portrait-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 15%; /* Keeps face & hair completely in view */
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.creator-photo-wrapper:hover .creator-portrait-img {
+  transform: scale(1.03);
+}
+
+.creator-photo-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(2, 23, 5, 0.5) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .creator-editorial-layout {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .creator-photo-wrapper {
+    width: 170px;
+    height: 235px;
+  }
+}
+
+/* Content Container */
+.page-content-wrapper {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+}
+
+.editorial-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+@media (max-width: 768px) {
+  .editorial-container {
+    padding: 0 20px;
+  }
+}
+
+/* Section Header Styles */
+.section-tagline {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold-primary);
+  margin-bottom: 16px;
+}
+
+.section-tagline::before,
+.section-tagline::after {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: var(--gold-border);
+}
+
+.section-title {
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  font-weight: 900;
+  line-height: 1.08;
+  margin-bottom: 24px;
+}
+
+.section-subtitle {
+  font-size: 1.15rem;
+  color: var(--ivory-muted);
+  max-width: 680px;
+  line-height: 1.7;
+}
+
+/* Gold Divider Line */
+.gold-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold-primary) 50%, transparent 100%);
+  margin: 40px 0;
+  opacity: 0.35;
+}
+
+/* Glass Card */
+.glass-card {
+  background: var(--surface-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: 8px;
+  padding: 36px;
+  box-shadow: var(--shadow-ambient);
+  transition: transform 0.35s var(--ease-smooth), border-color 0.35s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(212, 175, 55, 0.4);
+}

@@ -1,0 +1,198 @@
+/* ==========================================================================
+   SULTAN: A MEMOIR — Design Tokens & Core Styling
+   Colors extracted from official Pakistan Cricket Star Logo (#055D09)
+   ========================================================================== */
+
+:root {
+  /* Pakistan Cricket Green Spectrum */
+  --pk-green-primary: #055D09;
+  --pk-green-deep: #044207;
+  --pk-green-pitch: #021705;
+  --pk-green-pitch-black: #010E03;
+  --pk-green-glow: #578F06;
+  --pk-green-subtle: rgba(5, 93, 9, 0.18);
+  --pk-green-border: rgba(87, 143, 6, 0.28);
+
+  /* Metallic Gold Foil */
+  --gold-primary: #D4AF37;
+  --gold-bright: #F5D77F;
+  --gold-muted: #9E8032;
+  --gold-subtle: rgba(212, 175, 55, 0.12);
+  --gold-border: rgba(212, 175, 55, 0.25);
+  --gold-gradient: linear-gradient(135deg, #F5D77F 0%, #D4AF37 50%, #9E8032 100%);
+
+  /* Neutrals & Typography */
+  --ivory-white: #F8F6F0;
+  --ivory-muted: #D8DFD5;
+  --text-dim: #8E9E8C;
+  --text-dark: #121A13;
+
+  /* Surfaces & Glass */
+  --surface-pitch: rgba(2, 23, 5, 0.85);
+  --surface-card: rgba(4, 38, 7, 0.65);
+  --surface-glass: rgba(6, 45, 9, 0.45);
+  --surface-glass-border: rgba(212, 175, 55, 0.15);
+
+  /* Typography */
+  --font-display: 'Cinzel', 'Playfair Display', serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Shadows */
+  --shadow-ambient: 0 30px 80px rgba(0, 0, 0, 0.85);
+  --shadow-gold: 0 10px 40px rgba(212, 175, 55, 0.2);
+  --shadow-green: 0 10px 40px rgba(5, 93, 9, 0.35);
+
+  /* Transitions */
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 0.8s var(--ease-smooth);
+  --transition-fast: 0.25s ease;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+  background-color: var(--pk-green-pitch-black);
+}
+
+body {
+  background-color: var(--pk-green-pitch-black);
+  color: var(--ivory-white);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Subtle Film Grain Texture Overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Typography Utilities */
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ivory-white);
+  line-height: 1.15;
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.text-gold {
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.text-muted {
+  color: var(--text-dim);
+}
+
+/* Selection */
+::selection {
+  background: var(--pk-green-primary);
+  color: var(--gold-bright);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--pk-green-pitch-black);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.35);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-primary);
+}
+
+/* Base Buttons */
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--gold-gradient);
+  color: #0A160A;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 15px 32px;
+  border-radius: 4px;
+  text-decoration: none;
+  border: 1px solid var(--gold-bright);
+  box-shadow: 0 4px 25px rgba(212, 175, 55, 0.3);
+  cursor: pointer;
+  transition: all 0.3s var(--ease-smooth);
+}
+
+.btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 35px rgba(212, 175, 55, 0.45);
+  filter: brightness(1.08);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(5, 93, 9, 0.25);
+  color: var(--ivory-white);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 15px 30px;
+  border-radius: 4px;
+  text-decoration: none;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all 0.3s var(--ease-smooth);
+}
+
+.btn-ghost:hover {
+  background: rgba(5, 93, 9, 0.5);
+  border-color: var(--gold-primary);
+  color: var(--gold-bright);
+  transform: translateY(-2px);
+}
+
+/* Accessibility Focus States */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--gold-primary);
+  outline-offset: 3px;
+}

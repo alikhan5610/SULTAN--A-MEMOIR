@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 70" fill="none">
+  <rect width="240" height="70" rx="12" fill="#111111"/>
+  <rect x="1" y="1" width="238" height="68" rx="11" stroke="#E30613" stroke-width="1.5" stroke-opacity="0.6"/>
+  <!-- JazzCash Red & Yellow emblem -->
+  <g transform="translate(18, 16)">
+    <circle cx="19" cy="19" r="19" fill="#E30613"/>
+    <path d="M12 10h14v4h-9v5h8v4h-8v6h9v4H12V10z" fill="#FFCC00"/>
+    <circle cx="28" cy="14" r="3" fill="#FFCC00"/>
+  </g>
+  <text x="68" y="34" fill="#FFFFFF" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="800" font-size="20" letter-spacing="0.5">Jazz<tspan fill="#FFCC00">Cash</tspan></text>
+  <text x="68" y="49" fill="#999999" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="500" font-size="10" letter-spacing="1">MOBILE WALLET</text>
+  <!-- Verified check -->
+  <circle cx="212" cy="35" r="9" fill="#E30613" fill-opacity="0.2"/>
+  <path d="M208 35l3 3 5-5" stroke="#E30613" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
