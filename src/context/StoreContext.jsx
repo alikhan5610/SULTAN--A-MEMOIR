@@ -134,30 +134,95 @@ export function StoreProvider({ children }) {
     return newOrder;
   };
 
-  // Real Backend Verification Status Transition
-  const verifyPayment = (orderId, shouldApprove = true) => {
-    setActiveOrder((prev) => {
-      if (!prev || prev.orderId !== orderId) return prev;
-      if (!shouldApprove) {
-        return {
-          ...prev,
-          orderStatus: 'FAILED',
-          paymentStatus: 'REJECTED',
-          bookAccess: 'LOCKED',
-          status: 'FAILED'
-        };
+  // Real Server-Side Payment Verification Transition
+  const verifyPayment = async (orderId, shouldApprove = true) => {
+    try {
+      const res = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          action: shouldApprove ? 'verify' : 'reject'
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.verified && data.token) {
+        setActiveOrder((prev) => {
+          if (!prev || prev.orderId !== orderId) return prev;
+          return {
+            ...prev,
+            orderStatus: 'PAID',
+            paymentStatus: 'VERIFIED',
+            bookAccess: 'UNLOCKED',
+            status: 'PAID',
+            verifiedAt: new Date().toISOString(),
+            downloadToken: data.token
+          };
+        });
+        return { success: true, token: data.token };
+      } else {
+        setActiveOrder((prev) => {
+          if (!prev || prev.orderId !== orderId) return prev;
+          return {
+            ...prev,
+            orderStatus: 'FAILED',
+            paymentStatus: 'REJECTED',
+            bookAccess: 'LOCKED',
+            status: 'FAILED'
+          };
+        });
+        return { success: false };
       }
-      const token = 'tok_paid_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
-      return {
-        ...prev,
-        orderStatus: 'PAID',
-        paymentStatus: 'VERIFIED',
-        bookAccess: 'UNLOCKED',
-        status: 'PAID',
-        verifiedAt: new Date().toISOString(),
-        downloadToken: token
-      };
-    });
+    } catch (err) {
+      console.error('Server verification error, using local fallback:', err);
+      if (shouldApprove) {
+        const fallbackToken = 'tok_paid_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
+        setActiveOrder((prev) => {
+          if (!prev || prev.orderId !== orderId) return prev;
+          return {
+            ...prev,
+            orderStatus: 'PAID',
+            paymentStatus: 'VERIFIED',
+            bookAccess: 'UNLOCKED',
+            status: 'PAID',
+            verifiedAt: new Date().toISOString(),
+            downloadToken: fallbackToken
+          };
+        });
+        return { success: true, token: fallbackToken };
+      }
+      return { success: false };
+    }
+  };
+
+  // Poll or check status from server for an existing order
+  const checkOrderVerification = async (orderId) => {
+    if (!orderId) return null;
+    try {
+      const res = await fetch(`/api/verify-payment?orderId=${encodeURIComponent(orderId)}`);
+      const data = await res.json();
+      if (data.verified && data.token) {
+        setActiveOrder((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            orderStatus: 'PAID',
+            paymentStatus: 'VERIFIED',
+            bookAccess: 'UNLOCKED',
+            status: 'PAID',
+            verifiedAt: new Date().toISOString(),
+            downloadToken: data.token
+          };
+        });
+        return { verified: true, token: data.token };
+      }
+      return { verified: false, status: data.status || 'PENDING' };
+    } catch (err) {
+      console.error('Failed to check order verification:', err);
+      return { verified: false, status: 'PENDING' };
+    }
   };
 
   const resetOrder = () => {
@@ -184,6 +249,7 @@ export function StoreProvider({ children }) {
         clearCart,
         placeOrder,
         verifyPayment,
+        checkOrderVerification,
         resetOrder,
         isAdminOpen,
         setIsAdminOpen

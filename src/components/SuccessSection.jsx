@@ -1,63 +1,155 @@
 import React, { useState } from 'react';
-import { CheckCircle, Download, FileText, ShieldCheck, Sparkles, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Download, FileText, ShieldCheck, Sparkles, AlertTriangle, Lock, RefreshCw, ExternalLink, MessageCircle, Clock, XCircle } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 
 export default function SuccessSection() {
-  const { activeOrder, resetOrder } = useStore();
+  const { activeOrder, checkOrderVerification, setIsAdminOpen, resetOrder } = useStore();
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloadError, setDownloadError] = useState('');
+  const [isChecking, setIsChecking] = useState(false);
+  const [lookupOrderId, setLookupOrderId] = useState('');
+  const [lookupError, setLookupError] = useState('');
 
-  // Only render if there is an active order and it is PAID
-  if (!activeOrder || activeOrder.status !== 'PAID') return null;
+  // If no order in session, show the order lookup portal
+  if (!activeOrder) {
+    const handleLookup = async (e) => {
+      e.preventDefault();
+      if (!lookupOrderId.trim()) return;
+      setIsChecking(true);
+      setLookupError('');
+      const res = await checkOrderVerification(lookupOrderId.trim());
+      setIsChecking(false);
+      if (!res || !res.verified) {
+        setLookupError('Your payment has not been verified yet. Please wait or contact support at 03108985387.');
+      }
+    };
 
-  const handleDownload = async () => {
+    return (
+      <section
+        id="order-success"
+        style={{
+          position: 'relative',
+          padding: '80px 0 100px',
+          zIndex: 10,
+          backgroundColor: '#021204',
+          borderTop: '1px solid var(--gold-border)',
+          borderBottom: '1px solid var(--gold-border)'
+        }}
+      >
+        <div className="editorial-container">
+          <div
+            className="glass-card"
+            style={{
+              maxWidth: '680px',
+              margin: '0 auto',
+              padding: '40px 32px',
+              textAlign: 'center',
+              background: 'linear-gradient(135deg, rgba(5, 93, 9, 0.25) 0%, rgba(2, 23, 5, 0.95) 100%)',
+              border: '1px solid var(--gold-border)',
+              boxShadow: '0 30px 100px rgba(0, 0, 0, 0.95)'
+            }}
+          >
+            <div style={{ width: '60px', height: '60px', borderRadius: '50%', margin: '0 auto 18px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(212, 175, 55, 0.15)', border: '1px solid var(--gold-primary)' }}>
+              <Download size={28} color="var(--gold-bright)" />
+            </div>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', color: 'var(--ivory-white)', marginBottom: '10px' }}>
+              ACCESS YOUR PURCHASED BOOK
+            </h3>
+            <p style={{ color: 'var(--ivory-muted)', fontSize: '0.92rem', maxWidth: '480px', margin: '0 auto 24px', lineHeight: 1.6 }}>
+              Already purchased <strong>SULTAN: A MEMOIR</strong>? Enter your Order Reference to download your verified 191-page digital edition.
+            </p>
+            <form onSubmit={handleLookup} style={{ display: 'flex', gap: '10px', maxWidth: '440px', margin: '0 auto', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                placeholder="e.g. AK-20260915-12345"
+                value={lookupOrderId}
+                onChange={(e) => setLookupOrderId(e.target.value)}
+                style={{
+                  flex: 1,
+                  minWidth: '220px',
+                  padding: '12px 16px',
+                  background: 'rgba(0, 0, 0, 0.6)',
+                  border: '1px solid var(--gold-border)',
+                  borderRadius: '6px',
+                  color: 'var(--ivory-white)',
+                  fontFamily: 'monospace',
+                  fontSize: '0.9rem'
+                }}
+              />
+              <button type="submit" disabled={isChecking} className="btn-gold" style={{ padding: '12px 20px', fontSize: '0.85rem' }}>
+                {isChecking ? 'Checking...' : 'Access Book'}
+              </button>
+            </form>
+            {lookupError && (
+              <p style={{ color: '#FFBABA', fontSize: '0.85rem', marginTop: '16px', background: 'rgba(255, 107, 107, 0.15)', padding: '10px', borderRadius: '6px' }}>
+                {lookupError}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const isPaid = activeOrder.status === 'PAID' && !!activeOrder.downloadToken;
+  const isPending = activeOrder.status === 'PENDING';
+  const isFailed = activeOrder.status === 'FAILED';
+
+  const downloadUrl = isPaid
+    ? `/api/download?token=${encodeURIComponent(activeOrder.downloadToken)}&orderId=${encodeURIComponent(activeOrder.orderId)}`
+    : null;
+
+  const handleDownload = () => {
+    if (!isPaid || !downloadUrl) {
+      setDownloadError('Your payment has not been verified yet. Please wait or contact support.');
+      return;
+    }
+
     setIsDownloading(true);
     setDownloadError('');
 
     try {
-      // Authenticated download endpoint request with secure token
-      const res = await fetch(`/api/download?token=${encodeURIComponent(activeOrder.downloadToken)}&orderId=${activeOrder.orderId}`);
-      
-      if (!res.ok) {
-        // Fallback for client-side dev testing if API server isn't running concurrently
-        const fallbackRes = await fetch('/preview/sultan-sample.pdf');
-        const blob = await fallbackRes.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Sultan-A-Memoir-Wasim-Akram.pdf';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        setDownloadSuccess(true);
-      } else {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Sultan-A-Memoir-Wasim-Akram.pdf';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        setDownloadSuccess(true);
-      }
+      // Trigger native browser download directly via dedicated endpoint
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = 'Sultan-A-Memoir-Wasim-Akram.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setDownloadSuccess(true);
     } catch (err) {
-      console.error(err);
-      setDownloadError('Download server is connecting. Your token is preserved; please retry.');
+      console.error('Direct download error:', err);
+      // Fallback: Open in new window
+      window.open(downloadUrl, '_blank');
+      setDownloadSuccess(true);
     } finally {
       setIsDownloading(false);
     }
   };
+
+  const handleRefreshVerification = async () => {
+    setIsChecking(true);
+    setDownloadError('');
+    const res = await checkOrderVerification(activeOrder.orderId);
+    setIsChecking(false);
+    if (res && res.verified) {
+      setDownloadSuccess(true);
+    } else {
+      setDownloadError('Your payment has not been verified yet. Please wait or contact support.');
+    }
+  };
+
+  const whatsappMessage = encodeURIComponent(
+    `Hello Ali Khan, I have made payment for SULTAN: A MEMOIR.\nOrder Reference: ${activeOrder.orderId}\nTID: ${activeOrder.transactionId}\nCustomer: ${activeOrder.customer?.name} (${activeOrder.customer?.phone})\nPlease verify my order.`
+  );
 
   return (
     <section
       id="order-success"
       style={{
         position: 'relative',
-        padding: '100px 0 120px',
+        padding: '90px 0 110px',
         zIndex: 10,
         backgroundColor: '#021204',
         borderTop: '2px solid var(--gold-primary)',
@@ -70,31 +162,46 @@ export default function SuccessSection() {
           style={{
             maxWidth: '780px',
             margin: '0 auto',
-            padding: '50px 40px',
+            padding: '50px 36px',
             textAlign: 'center',
-            background: 'linear-gradient(135deg, rgba(5, 93, 9, 0.4) 0%, rgba(2, 23, 5, 0.95) 100%)',
-            border: '1px solid var(--gold-primary)',
+            background: isPaid
+              ? 'linear-gradient(135deg, rgba(5, 93, 9, 0.45) 0%, rgba(2, 23, 5, 0.98) 100%)'
+              : isFailed
+              ? 'linear-gradient(135deg, rgba(80, 10, 10, 0.4) 0%, rgba(2, 23, 5, 0.98) 100%)'
+              : 'linear-gradient(135deg, rgba(20, 45, 15, 0.5) 0%, rgba(2, 23, 5, 0.98) 100%)',
+            border: `1px solid ${isPaid ? 'var(--gold-primary)' : isFailed ? '#FF6B6B' : 'var(--gold-border)'}`,
             boxShadow: '0 30px 100px rgba(0, 0, 0, 0.95)'
           }}
         >
-          {/* Subtle Success Animation Icon */}
+          {/* Status Icon */}
           <div
             style={{
               width: '80px',
               height: '80px',
               borderRadius: '50%',
-              margin: '0 auto 24px',
+              margin: '0 auto 22px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'rgba(5, 93, 9, 0.6)',
-              border: '2px solid var(--pk-green-glow)',
-              boxShadow: '0 0 35px rgba(87, 143, 6, 0.4)'
+              background: isPaid
+                ? 'rgba(5, 93, 9, 0.6)'
+                : isFailed
+                ? 'rgba(255, 107, 107, 0.2)'
+                : 'rgba(212, 175, 55, 0.15)',
+              border: `2px solid ${isPaid ? 'var(--pk-green-glow)' : isFailed ? '#FF6B6B' : 'var(--gold-primary)'}`,
+              boxShadow: isPaid ? '0 0 35px rgba(87, 143, 6, 0.4)' : 'none'
             }}
           >
-            <CheckCircle size={44} color="#A2E26E" />
+            {isPaid ? (
+              <CheckCircle size={44} color="#A2E26E" />
+            ) : isFailed ? (
+              <XCircle size={44} color="#FF6B6B" />
+            ) : (
+              <Clock size={44} color="var(--gold-bright)" />
+            )}
           </div>
 
+          {/* Status Label */}
           <div
             style={{
               fontFamily: 'var(--font-sans)',
@@ -102,41 +209,72 @@ export default function SuccessSection() {
               fontWeight: 800,
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
-              color: '#A2E26E',
+              color: isPaid ? '#A2E26E' : isFailed ? '#FF6B6B' : 'var(--gold-bright)',
               marginBottom: '10px'
             }}
           >
-            ✓ PAYMENT SUCCESSFUL &amp; VERIFIED
+            {isPaid
+              ? '✓ PAYMENT VERIFIED & UNLOCKED'
+              : isFailed
+              ? '✕ PAYMENT VERIFICATION FAILED'
+              : '⏳ PAYMENT PENDING VERIFICATION'}
           </div>
 
+          {/* Headline */}
           <h2
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(2rem, 5vw, 3.2rem)',
+              fontSize: 'clamp(1.9rem, 4.5vw, 3rem)',
               fontWeight: 900,
               color: 'var(--ivory-white)',
               lineHeight: 1.15,
               marginBottom: '16px'
             }}
           >
-            THANK YOU FOR YOUR PURCHASE
+            {isPaid
+              ? 'THANK YOU FOR YOUR PURCHASE'
+              : isFailed
+              ? 'PAYMENT NOT VERIFIED'
+              : 'ORDER AWAITING CONFIRMATION'}
           </h2>
 
-          <p style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', color: 'var(--gold-bright)', marginBottom: '36px' }}>
-            <strong style={{ color: 'var(--ivory-white)' }}>SULTAN: A MEMOIR</strong> is ready for you.
-          </p>
+          {/* Subheading / Message */}
+          {isPaid ? (
+            <p style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', color: 'var(--gold-bright)', marginBottom: '32px' }}>
+              <strong style={{ color: 'var(--ivory-white)' }}>SULTAN: A MEMOIR</strong> (Complete 191 Pages) is unlocked and ready for download.
+            </p>
+          ) : (
+            <div
+              style={{
+                background: isFailed ? 'rgba(255, 107, 107, 0.15)' : 'rgba(212, 175, 55, 0.12)',
+                border: `1px solid ${isFailed ? 'rgba(255, 107, 107, 0.3)' : 'var(--gold-border)'}`,
+                borderRadius: '8px',
+                padding: '16px 20px',
+                maxWidth: '600px',
+                margin: '0 auto 28px',
+                color: isFailed ? '#FFBABA' : 'var(--ivory-white)',
+                fontSize: '0.95rem',
+                lineHeight: 1.6
+              }}
+            >
+              <strong>Your payment has not been verified yet. Please wait or contact support.</strong>
+              <p style={{ fontSize: '0.82rem', color: 'var(--ivory-muted)', marginTop: '6px' }}>
+                Manual transfers into JazzCash / EasyPaisa (<strong>03108985387</strong>) are verified by the administrator. Once confirmed, your download unlocks instantly.
+              </p>
+            </div>
+          )}
 
-          {/* Receipt Card */}
+          {/* Order Details Receipt Card */}
           <div
             style={{
-              background: 'rgba(0, 0, 0, 0.5)',
+              background: 'rgba(0, 0, 0, 0.55)',
               border: '1px solid rgba(212, 175, 55, 0.25)',
               borderRadius: '8px',
-              padding: '24px',
-              maxWidth: '520px',
-              margin: '0 auto 36px',
+              padding: '22px 24px',
+              maxWidth: '540px',
+              margin: '0 auto 32px',
               textAlign: 'left',
-              fontSize: '0.9rem'
+              fontSize: '0.88rem'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -146,8 +284,12 @@ export default function SuccessSection() {
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ color: 'var(--text-dim)' }}>Customer:</span>
+              <span style={{ color: 'var(--ivory-white)' }}>{activeOrder.customer?.name} ({activeOrder.customer?.phone})</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ color: 'var(--text-dim)' }}>Book Title:</span>
-              <span style={{ fontWeight: 700, color: 'var(--ivory-white)' }}>SULTAN: A MEMOIR</span>
+              <span style={{ fontWeight: 700, color: 'var(--ivory-white)' }}>SULTAN: A MEMOIR (191 Pages)</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ color: 'var(--text-dim)' }}>Amount Paid:</span>
@@ -157,45 +299,159 @@ export default function SuccessSection() {
               <span style={{ color: 'var(--text-dim)' }}>Payment Method:</span>
               <span style={{ textTransform: 'uppercase', color: 'var(--ivory-white)' }}>{activeOrder.paymentMethod}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px', marginTop: '6px' }}>
-              <span style={{ color: 'var(--text-dim)' }}>Verification Token:</span>
-              <span style={{ fontFamily: 'monospace', fontSize: '0.76rem', color: '#A2E26E' }}>
-                {activeOrder.downloadToken?.substring(0, 18)}...
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ color: 'var(--text-dim)' }}>Transaction ID:</span>
+              <span style={{ fontFamily: 'monospace', color: 'var(--gold-bright)', fontWeight: 700 }}>
+                {activeOrder.transactionId}
               </span>
             </div>
+            {isPaid && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px', marginTop: '6px' }}>
+                <span style={{ color: 'var(--text-dim)' }}>Verification Token:</span>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.76rem', color: '#A2E26E' }}>
+                  {activeOrder.downloadToken?.substring(0, 22)}...
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* Primary Download Button */}
-          <div style={{ maxWidth: '440px', margin: '0 auto' }}>
-            <button
-              onClick={handleDownload}
-              disabled={isDownloading}
-              className="btn-gold"
-              style={{
-                width: '100%',
-                padding: '18px 30px',
-                fontSize: '1rem',
-                fontWeight: 800
-              }}
-            >
-              <Download size={22} />
-              <span>{isDownloading ? 'PREPARING PDF...' : 'DOWNLOAD SULTAN: A MEMOIR'}</span>
-            </button>
+          {/* Action Area */}
+          <div style={{ maxWidth: '480px', margin: '0 auto' }}>
+            {isPaid ? (
+              <div>
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  className="btn-gold"
+                  style={{
+                    width: '100%',
+                    padding: '18px 24px',
+                    fontSize: '1.05rem',
+                    fontWeight: 800,
+                    marginBottom: '12px'
+                  }}
+                >
+                  <Download size={22} />
+                  <span>{isDownloading ? 'PREPARING PDF...' : 'DOWNLOAD SULTAN: A MEMOIR (191 PAGES)'}</span>
+                </button>
 
-            {downloadSuccess && (
-              <p style={{ color: '#A2E26E', fontSize: '0.85rem', marginTop: '12px', fontWeight: 600 }}>
-                ✓ Download initiated successfully. Enjoy the definitive story of Wasim Akram!
-              </p>
+                {downloadUrl && (
+                  <a
+                    href={downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-ghost"
+                    style={{
+                      width: '100%',
+                      padding: '12px 20px',
+                      fontSize: '0.88rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      marginBottom: '16px'
+                    }}
+                  >
+                    <ExternalLink size={16} />
+                    <span>Open / Read in New Tab</span>
+                  </a>
+                )}
+
+                {downloadSuccess && (
+                  <p style={{ color: '#A2E26E', fontSize: '0.88rem', marginTop: '8px', fontWeight: 600 }}>
+                    ✓ Download initiated successfully! Enjoy the definitive story of Wasim Akram.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div>
+                {/* Locked Download Button */}
+                <button
+                  type="button"
+                  disabled={true}
+                  style={{
+                    width: '100%',
+                    padding: '18px 24px',
+                    fontSize: '0.95rem',
+                    fontWeight: 800,
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: 'var(--text-dim)',
+                    borderRadius: '6px',
+                    cursor: 'not-allowed',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px',
+                    marginBottom: '14px'
+                  }}
+                >
+                  <Lock size={20} />
+                  <span>DOWNLOAD BOOK (LOCKED — AWAITING VERIFICATION)</span>
+                </button>
+
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                  <button
+                    type="button"
+                    onClick={handleRefreshVerification}
+                    disabled={isChecking}
+                    className="btn-ghost"
+                    style={{ flex: 1, padding: '12px', fontSize: '0.85rem', minWidth: '180px' }}
+                  >
+                    <RefreshCw size={16} className={isChecking ? 'spin' : ''} />
+                    <span>{isChecking ? 'Checking...' : 'Check Status'}</span>
+                  </button>
+
+                  <a
+                    href={`https://wa.me/923108985387?text=${whatsappMessage}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-gold"
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      fontSize: '0.85rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      minWidth: '180px'
+                    }}
+                  >
+                    <MessageCircle size={16} />
+                    <span>WhatsApp Support</span>
+                  </a>
+                </div>
+
+                {/* Developer / Admin Verification Modal Launcher */}
+                <div style={{ marginTop: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsAdminOpen(true)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--gold-muted)',
+                      fontSize: '0.78rem',
+                      textDecoration: 'underline',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Open Merchant / Admin Verification Simulator
+                  </button>
+                </div>
+              </div>
             )}
 
             {downloadError && (
-              <p style={{ color: '#FF6B6B', fontSize: '0.85rem', marginTop: '12px' }}>
+              <p style={{ color: '#FFBABA', fontSize: '0.88rem', marginTop: '12px', background: 'rgba(255, 107, 107, 0.15)', padding: '10px', borderRadius: '6px' }}>
                 {downloadError}
               </p>
             )}
 
-            <p style={{ fontSize: '0.76rem', color: 'var(--text-dim)', marginTop: '16px' }}>
-              High-resolution unabridged PDF (191 Pages). Lifetime access authorized to {activeOrder.customer.name}.
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '16px', lineHeight: 1.5 }}>
+              High-resolution unabridged PDF (191 Pages, 2.7 MB). Author: Wasim Akram with Gideon Haigh.
             </p>
           </div>
         </div>

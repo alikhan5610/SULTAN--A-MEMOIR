@@ -1,27 +1,53 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Clock, CheckCircle2, XCircle, FileText, ArrowRight, X, Sparkles } from 'lucide-react';
+import { ShieldCheck, Clock, CheckCircle2, XCircle, FileText, ArrowRight, X, Sparkles, Download, ExternalLink, MessageCircle } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 
 export default function VerificationModal() {
   const { activeOrder, verifyPayment, resetOrder, isAdminOpen, setIsAdminOpen } = useStore();
   const [isVerifying, setIsVerifying] = useState(false);
+  const [downloadInitiated, setDownloadInitiated] = useState(false);
 
   if (!activeOrder && !isAdminOpen) return null;
 
-  const handleSimulateApproval = () => {
+  const handleSimulateApproval = async () => {
     setIsVerifying(true);
-    setTimeout(() => {
-      verifyPayment(activeOrder.orderId, true);
-      setIsVerifying(false);
-    }, 1200);
+    await verifyPayment(activeOrder.orderId, true);
+    setIsVerifying(false);
   };
 
-  const handleSimulateRejection = () => {
+  const handleSimulateRejection = async () => {
     setIsVerifying(true);
-    setTimeout(() => {
-      verifyPayment(activeOrder.orderId, false);
-      setIsVerifying(false);
-    }, 800);
+    await verifyPayment(activeOrder.orderId, false);
+    setIsVerifying(false);
+  };
+
+  const isPaid = activeOrder?.status === 'PAID' && !!activeOrder?.downloadToken;
+  const downloadUrl = isPaid
+    ? `/api/download?token=${encodeURIComponent(activeOrder.downloadToken)}&orderId=${encodeURIComponent(activeOrder.orderId)}`
+    : null;
+
+  const handleDownload = () => {
+    if (!downloadUrl) return;
+    try {
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = 'Sultan-A-Memoir-Wasim-Akram.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setDownloadInitiated(true);
+    } catch {
+      window.open(downloadUrl, '_blank');
+      setDownloadInitiated(true);
+    }
+  };
+
+  const handleGoToPortal = () => {
+    setIsAdminOpen(false);
+    const el = document.getElementById('order-success');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -43,6 +69,8 @@ export default function VerificationModal() {
         style={{
           width: '100%',
           maxWidth: '560px',
+          maxHeight: '92vh',
+          overflowY: 'auto',
           backgroundColor: '#021404',
           border: '1px solid var(--gold-border)',
           borderRadius: '12px',
@@ -158,7 +186,7 @@ export default function VerificationModal() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <span style={{ color: 'var(--text-dim)' }}>Customer:</span>
-                <span style={{ color: 'var(--ivory-white)' }}>{activeOrder.customer.name}</span>
+                <span style={{ color: 'var(--ivory-white)' }}>{activeOrder.customer?.name} ({activeOrder.customer?.phone})</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <span style={{ color: 'var(--text-dim)' }}>Payment Method:</span>
@@ -183,9 +211,24 @@ export default function VerificationModal() {
             {/* Status-Specific Actions */}
             {activeOrder.status === 'PENDING' && (
               <div>
-                <p style={{ fontSize: '0.84rem', color: 'var(--ivory-muted)', textAlign: 'center', lineHeight: 1.6, marginBottom: '20px' }}>
-                  Your payment details have been logged into our merchant portal. Once the transfer into <strong>03108985387</strong> is confirmed by the administrator, your download of <strong>SULTAN: A MEMOIR</strong> will instantly activate.
-                </p>
+                <div
+                  style={{
+                    background: 'rgba(212, 175, 55, 0.12)',
+                    border: '1px solid var(--gold-border)',
+                    borderRadius: '8px',
+                    padding: '14px 16px',
+                    marginBottom: '20px',
+                    fontSize: '0.88rem',
+                    color: 'var(--ivory-white)',
+                    lineHeight: 1.5,
+                    textAlign: 'center'
+                  }}
+                >
+                  <strong>Your payment has not been verified yet. Please wait or contact support.</strong>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--ivory-muted)', marginTop: '6px' }}>
+                    Admin confirmation required for JazzCash / EasyPaisa transfer into <strong>03108985387</strong>.
+                  </div>
+                </div>
 
                 {/* Admin Simulation Tool for live testing */}
                 <div
@@ -194,7 +237,8 @@ export default function VerificationModal() {
                     border: '1px dashed var(--gold-border)',
                     borderRadius: '8px',
                     padding: '16px',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    marginBottom: '16px'
                   }}
                 >
                   <div style={{ fontSize: '0.74rem', color: 'var(--gold-bright)', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '10px' }}>
@@ -229,21 +273,82 @@ export default function VerificationModal() {
                     </button>
                   </div>
                 </div>
+
+                <div style={{ textAlign: 'center' }}>
+                  <button
+                    onClick={handleGoToPortal}
+                    className="btn-ghost"
+                    style={{ width: '100%', padding: '12px', fontSize: '0.85rem' }}
+                  >
+                    Close & View Order Status on Page
+                  </button>
+                </div>
               </div>
             )}
 
             {activeOrder.status === 'PAID' && (
               <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: '0.9rem', color: 'var(--ivory-muted)', marginBottom: '20px' }}>
-                  Your payment has been successfully verified! You now hold lifetime access to the complete 191-page digital edition.
+                <p style={{ fontSize: '0.92rem', color: 'var(--ivory-muted)', marginBottom: '20px', lineHeight: 1.5 }}>
+                  Your payment has been successfully verified! You hold lifetime access to the complete 191-page digital edition of <strong>SULTAN: A MEMOIR</strong>.
                 </p>
+
+                {/* Primary Download Button in Modal */}
                 <button
-                  onClick={() => setIsAdminOpen(false)}
+                  type="button"
+                  onClick={handleDownload}
                   className="btn-gold"
-                  style={{ width: '100%', padding: '16px' }}
+                  style={{
+                    width: '100%',
+                    padding: '16px 20px',
+                    fontSize: '1rem',
+                    fontWeight: 800,
+                    marginBottom: '10px'
+                  }}
                 >
-                  <span>VIEW DOWNLOAD PORTAL</span>
-                  <ArrowRight size={18} />
+                  <Download size={20} />
+                  <span>DOWNLOAD BOOK (191 PAGES)</span>
+                </button>
+
+                {downloadUrl && (
+                  <a
+                    href={downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-ghost"
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      fontSize: '0.84rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      marginBottom: '14px'
+                    }}
+                  >
+                    <ExternalLink size={14} />
+                    <span>Open / Read in Browser (New Tab)</span>
+                  </a>
+                )}
+
+                {downloadInitiated && (
+                  <p style={{ color: '#A2E26E', fontSize: '0.84rem', marginBottom: '14px', fontWeight: 600 }}>
+                    ✓ Download initiated! Check your browser downloads.
+                  </p>
+                )}
+
+                <button
+                  onClick={handleGoToPortal}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-dim)',
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Close & View Full Receipt on Page
                 </button>
               </div>
             )}

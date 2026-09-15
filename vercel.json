@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "functions": {
+    "api/*.js": {
+      "includeFiles": "server/protected-storage/**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!assets/|preview/|favicon\\.ico|sitemap\\.xml|robots\\.txt|api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
