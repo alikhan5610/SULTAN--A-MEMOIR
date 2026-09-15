@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle, Download, FileText, ShieldCheck, Sparkles, AlertTriangle, Lock, RefreshCw, ExternalLink, MessageCircle, Clock, XCircle } from 'lucide-react';
+import { CheckCircle, Download, FileText, ShieldCheck, Sparkles, AlertTriangle, Lock, RefreshCw, ExternalLink, MessageCircle, Clock, XCircle, X } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 
 export default function SuccessSection() {
@@ -203,6 +203,7 @@ export default function SuccessSection() {
             margin: '0 auto',
             padding: '50px 36px',
             textAlign: 'center',
+            position: 'relative',
             background: isPaid
               ? 'linear-gradient(135deg, rgba(5, 93, 9, 0.45) 0%, rgba(2, 23, 5, 0.98) 100%)'
               : isFailed
@@ -212,6 +213,33 @@ export default function SuccessSection() {
             boxShadow: '0 30px 100px rgba(0, 0, 0, 0.95)'
           }}
         >
+          {/* Close / X Button — always visible */}
+          <button
+            type="button"
+            onClick={resetOrder}
+            aria-label="Close and return to home"
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              borderRadius: '50%',
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'var(--text-dim)',
+              transition: 'all 0.2s ease',
+              zIndex: 10
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'var(--ivory-white)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'var(--text-dim)'; }}
+          >
+            <X size={18} />
+          </button>
           {/* Status Icon */}
           <div
             style={{
@@ -501,6 +529,31 @@ export default function SuccessSection() {
             <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '16px', lineHeight: 1.5 }}>
               High-resolution unabridged PDF (191 Pages, 2.7 MB). Author: Wasim Akram with Gideon Haigh.
             </p>
+
+            {/* Return to Main Site */}
+            <button
+              type="button"
+              onClick={resetOrder}
+              style={{
+                marginTop: '24px',
+                background: 'transparent',
+                border: '1px solid rgba(212, 175, 55, 0.3)',
+                borderRadius: '6px',
+                color: 'var(--gold-muted)',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                padding: '10px 20px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold-primary)'; e.currentTarget.style.color = 'var(--gold-bright)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)'; e.currentTarget.style.color = 'var(--gold-muted)'; }}
+            >
+              ← Return to Main Site
+            </button>
           </div>
         </div>
       </div>
