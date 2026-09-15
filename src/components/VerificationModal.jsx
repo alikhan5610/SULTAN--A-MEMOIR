@@ -1,44 +1,91 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Clock, CheckCircle2, XCircle, FileText, ArrowRight, X, Sparkles, Download, ExternalLink, MessageCircle } from 'lucide-react';
+import { ShieldCheck, Clock, CheckCircle2, XCircle, FileText, ArrowRight, X, Sparkles, Download, ExternalLink, MessageCircle, AlertCircle } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 
 export default function VerificationModal() {
   const { activeOrder, verifyPayment, resetOrder, isAdminOpen, setIsAdminOpen } = useStore();
   const [isVerifying, setIsVerifying] = useState(false);
-  const [downloadInitiated, setDownloadInitiated] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
 
   if (!activeOrder && !isAdminOpen) return null;
 
   const handleSimulateApproval = async () => {
     setIsVerifying(true);
-    await verifyPayment(activeOrder.orderId, true);
+    await verifyPayment(activeOrder.orderId, true, true);
     setIsVerifying(false);
   };
 
   const handleSimulateRejection = async () => {
     setIsVerifying(true);
-    await verifyPayment(activeOrder.orderId, false);
+    await verifyPayment(activeOrder.orderId, false, true);
     setIsVerifying(false);
   };
 
   const isPaid = activeOrder?.status === 'PAID' && !!activeOrder?.downloadToken;
+  const isTestMode = Boolean(activeOrder?.isTestMode);
   const downloadUrl = isPaid
     ? `/api/download?token=${encodeURIComponent(activeOrder.downloadToken)}&orderId=${encodeURIComponent(activeOrder.orderId)}`
     : null;
 
-  const handleDownload = () => {
-    if (!downloadUrl) return;
+  const handleDownload = async () => {
+    if (!downloadUrl) {
+      setDownloadError('Your payment has not been verified yet. Please wait or contact support.');
+      setDownloadSuccess(false);
+      return;
+    }
+
+    setIsDownloading(true);
+    setDownloadError('');
+    setDownloadSuccess(false);
+
     try {
+      const res = await fetch(downloadUrl);
+      if (!res.ok) {
+        let msg = 'Download failed. Please try again or contact support.';
+        try {
+          const errData = await res.json();
+          if (errData.message) msg = errData.message;
+        } catch {}
+        setDownloadError(msg);
+        setDownloadSuccess(false);
+        setIsDownloading(false);
+        return;
+      }
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('pdf') && !contentType.includes('octet-stream')) {
+        setDownloadError('Download failed. Invalid response received from server.');
+        setDownloadSuccess(false);
+        setIsDownloading(false);
+        return;
+      }
+
+      const blob = await res.blob();
+      if (blob.size < 100000) {
+        setDownloadError('Download failed. File size is incomplete.');
+        setDownloadSuccess(false);
+        setIsDownloading(false);
+        return;
+      }
+
+      const objUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = downloadUrl;
+      a.href = objUrl;
       a.download = 'Sultan-A-Memoir-Wasim-Akram.pdf';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setDownloadInitiated(true);
-    } catch {
-      window.open(downloadUrl, '_blank');
-      setDownloadInitiated(true);
+      setTimeout(() => window.URL.revokeObjectURL(objUrl), 30000);
+
+      setDownloadSuccess(true);
+    } catch (err) {
+      console.error('Modal download error:', err);
+      setDownloadError('Download failed. Network or server error. Please try again.');
+      setDownloadSuccess(false);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -147,7 +194,7 @@ export default function VerificationModal() {
                       : 'var(--gold-bright)'
                 }}
               >
-                ORDER STATUS: {activeOrder.status}
+                ORDER STATUS: {activeOrder.status} {isTestMode ? '[TEST MODE]' : ''}
               </div>
 
               <h2
@@ -160,7 +207,9 @@ export default function VerificationModal() {
                 }}
               >
                 {activeOrder.status === 'PAID'
-                  ? 'Payment Verified & Unlocked'
+                  ? isTestMode
+                    ? 'Payment Verified (Test Mode)'
+                    : 'Payment Verified & Unlocked'
                   : activeOrder.status === 'FAILED'
                   ? 'Payment Could Not Be Verified'
                   : 'Awaiting Merchant Verification'}
@@ -195,7 +244,7 @@ export default function VerificationModal() {
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ color: 'var(--text-dim)' }}>Transaction ID (TID):</span>
+                <span style={{ color: 'var(--text-dim)' }}>Transaction ID:</span>
                 <span style={{ fontFamily: 'monospace', color: 'var(--gold-bright)', fontWeight: 700 }}>
                   {activeOrder.transactionId}
                 </span>
@@ -226,7 +275,7 @@ export default function VerificationModal() {
                 >
                   <strong>Your payment has not been verified yet. Please wait or contact support.</strong>
                   <div style={{ fontSize: '0.8rem', color: 'var(--ivory-muted)', marginTop: '6px' }}>
-                    Admin confirmation required for JazzCash / EasyPaisa transfer into <strong>03108985387</strong>.
+                    Admin confirmation required for transfer into <strong>03108985387</strong>.
                   </div>
                 </div>
 
@@ -241,8 +290,11 @@ export default function VerificationModal() {
                     marginBottom: '16px'
                   }}
                 >
-                  <div style={{ fontSize: '0.74rem', color: 'var(--gold-bright)', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '10px' }}>
-                    MERCHANT / ADMIN VERIFICATION SIMULATOR
+                  <div style={{ fontSize: '0.74rem', color: 'var(--gold-bright)', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '4px' }}>
+                    TEST / DEMO SIMULATION MODE
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--ivory-muted)', marginBottom: '12px' }}>
+                    For testing purposes only. Approving here tags order as [TEST MODE].
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
@@ -252,7 +304,7 @@ export default function VerificationModal() {
                       className="btn-gold"
                       style={{ flex: 1, padding: '10px', fontSize: '0.8rem' }}
                     >
-                      {isVerifying ? 'Verifying...' : '✓ Approve & Unlock Book'}
+                      {isVerifying ? 'Verifying...' : '✓ Approve (Test Simulation)'}
                     </button>
                     <button
                       type="button"
@@ -288,14 +340,21 @@ export default function VerificationModal() {
 
             {activeOrder.status === 'PAID' && (
               <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: '0.92rem', color: 'var(--ivory-muted)', marginBottom: '20px', lineHeight: 1.5 }}>
+                <p style={{ fontSize: '0.92rem', color: 'var(--ivory-muted)', marginBottom: '14px', lineHeight: 1.5 }}>
                   Your payment has been successfully verified! You hold lifetime access to the complete 191-page digital edition of <strong>SULTAN: A MEMOIR</strong>.
                 </p>
+
+                {isTestMode && (
+                  <div style={{ background: 'rgba(212, 175, 55, 0.12)', border: '1px dashed var(--gold-border)', borderRadius: '6px', padding: '8px 12px', marginBottom: '16px', fontSize: '0.78rem', color: 'var(--gold-bright)' }}>
+                    <strong>[TEST MODE]</strong> Verified via manual administrator simulation.
+                  </div>
+                )}
 
                 {/* Primary Download Button in Modal */}
                 <button
                   type="button"
                   onClick={handleDownload}
+                  disabled={isDownloading}
                   className="btn-gold"
                   style={{
                     width: '100%',
@@ -306,7 +365,7 @@ export default function VerificationModal() {
                   }}
                 >
                   <Download size={20} />
-                  <span>DOWNLOAD BOOK (191 PAGES)</span>
+                  <span>{isDownloading ? 'DOWNLOADING COMPLETE PDF...' : 'DOWNLOAD SULTAN: A MEMOIR (191 PAGES)'}</span>
                 </button>
 
                 {downloadUrl && (
@@ -331,9 +390,15 @@ export default function VerificationModal() {
                   </a>
                 )}
 
-                {downloadInitiated && (
+                {downloadSuccess && (
                   <p style={{ color: '#A2E26E', fontSize: '0.84rem', marginBottom: '14px', fontWeight: 600 }}>
-                    ✓ Download initiated! Check your browser downloads.
+                    ✓ Complete 191-page PDF downloaded successfully!
+                  </p>
+                )}
+
+                {downloadError && (
+                  <p style={{ color: '#FFBABA', fontSize: '0.84rem', marginBottom: '14px', background: 'rgba(255, 107, 107, 0.15)', padding: '8px', borderRadius: '6px' }}>
+                    {downloadError}
                   </p>
                 )}
 

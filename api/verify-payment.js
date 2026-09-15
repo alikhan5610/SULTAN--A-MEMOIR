@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 
 // In-memory / cache store for verified orders (survives during instance lifetime)
-// Real verification can also check against admin credentials or merchant database
 const verifiedOrders = new Map();
 
 export default async function handler(req, res) {
@@ -11,20 +10,25 @@ export default async function handler(req, res) {
   const orderId = req.query?.orderId || url.searchParams.get('orderId');
 
   if (req.method === 'POST') {
-    let body = {};
-    try {
-      if (typeof req.body === 'string') {
-        body = JSON.parse(req.body);
-      } else if (req.body) {
-        body = req.body;
-      }
-    } catch {
-      body = {};
+    let body = req.body;
+    if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch {}
+    } else if (!body) {
+      try {
+        const buffers = [];
+        for await (const chunk of req) {
+          buffers.push(chunk);
+        }
+        const data = Buffer.concat(buffers).toString();
+        if (data) body = JSON.parse(data);
+      } catch {}
     }
+    body = body || {};
 
     const targetOrderId = body.orderId || orderId;
     const transactionId = body.transactionId;
     const action = body.action || 'verify';
+    const isTestMode = Boolean(body.isTestMode);
 
     if (!targetOrderId) {
       res.statusCode = 400;
@@ -38,18 +42,19 @@ export default async function handler(req, res) {
       verifiedOrders.set(targetOrderId, {
         status: 'FAILED',
         verified: false,
+        isTestMode,
         verifiedAt: null
       });
       res.statusCode = 200;
       return res.end(JSON.stringify({
         verified: false,
         status: 'FAILED',
+        isTestMode,
         message: 'Your payment could not be verified. Please contact support.'
       }));
     }
 
     // Verify and issue secure paid token
-    // Token uses HMAC SHA-256 with timestamp
     const tokenSecret = process.env.PAYMENT_VERIFICATION_SECRET || 'sultan-wasim-akram-secure-token-secret-2026';
     const timestamp = Date.now();
     const hash = crypto.createHmac('sha256', tokenSecret).update(`${targetOrderId}-${timestamp}`).digest('hex').substring(0, 16);
@@ -59,6 +64,7 @@ export default async function handler(req, res) {
       status: 'PAID',
       verified: true,
       token,
+      isTestMode,
       verifiedAt: new Date().toISOString()
     });
 
@@ -66,10 +72,13 @@ export default async function handler(req, res) {
     return res.end(JSON.stringify({
       verified: true,
       status: 'PAID',
+      isTestMode,
       token,
       orderId: targetOrderId,
       downloadUrl: `/api/download?token=${encodeURIComponent(token)}&orderId=${encodeURIComponent(targetOrderId)}`,
-      message: 'Payment successfully verified.'
+      message: isTestMode
+        ? 'Payment verified via Test Mode simulation.'
+        : 'Payment successfully verified.'
     }));
   }
 
@@ -88,6 +97,7 @@ export default async function handler(req, res) {
     return res.end(JSON.stringify({
       verified: true,
       status: existing.status,
+      isTestMode: existing.isTestMode || false,
       token: existing.token,
       downloadUrl: `/api/download?token=${encodeURIComponent(existing.token)}&orderId=${encodeURIComponent(orderId)}`,
       message: 'Payment has been successfully verified.'
@@ -99,6 +109,7 @@ export default async function handler(req, res) {
     return res.end(JSON.stringify({
       verified: false,
       status: 'FAILED',
+      isTestMode: existing.isTestMode || false,
       message: 'Your payment could not be verified. Please contact support.'
     }));
   }
@@ -108,6 +119,7 @@ export default async function handler(req, res) {
   return res.end(JSON.stringify({
     verified: false,
     status: 'PENDING',
+    isTestMode: false,
     message: 'Your payment has not been verified yet. Please wait or contact support.'
   }));
 }

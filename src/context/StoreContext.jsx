@@ -135,14 +135,15 @@ export function StoreProvider({ children }) {
   };
 
   // Real Server-Side Payment Verification Transition
-  const verifyPayment = async (orderId, shouldApprove = true) => {
+  const verifyPayment = async (orderId, shouldApprove = true, isTestMode = false) => {
     try {
       const res = await fetch('/api/verify-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderId,
-          action: shouldApprove ? 'verify' : 'reject'
+          action: shouldApprove ? 'verify' : 'reject',
+          isTestMode
         })
       });
 
@@ -157,11 +158,12 @@ export function StoreProvider({ children }) {
             paymentStatus: 'VERIFIED',
             bookAccess: 'UNLOCKED',
             status: 'PAID',
+            isTestMode: Boolean(data.isTestMode ?? isTestMode),
             verifiedAt: new Date().toISOString(),
             downloadToken: data.token
           };
         });
-        return { success: true, token: data.token };
+        return { success: true, token: data.token, isTestMode };
       } else {
         setActiveOrder((prev) => {
           if (!prev || prev.orderId !== orderId) return prev;
@@ -170,7 +172,8 @@ export function StoreProvider({ children }) {
             orderStatus: 'FAILED',
             paymentStatus: 'REJECTED',
             bookAccess: 'LOCKED',
-            status: 'FAILED'
+            status: 'FAILED',
+            isTestMode: false
           };
         });
         return { success: false };
@@ -187,11 +190,12 @@ export function StoreProvider({ children }) {
             paymentStatus: 'VERIFIED',
             bookAccess: 'UNLOCKED',
             status: 'PAID',
+            isTestMode,
             verifiedAt: new Date().toISOString(),
             downloadToken: fallbackToken
           };
         });
-        return { success: true, token: fallbackToken };
+        return { success: true, token: fallbackToken, isTestMode };
       }
       return { success: false };
     }
@@ -212,11 +216,12 @@ export function StoreProvider({ children }) {
             paymentStatus: 'VERIFIED',
             bookAccess: 'UNLOCKED',
             status: 'PAID',
+            isTestMode: Boolean(data.isTestMode),
             verifiedAt: new Date().toISOString(),
             downloadToken: data.token
           };
         });
-        return { verified: true, token: data.token };
+        return { verified: true, token: data.token, isTestMode: data.isTestMode };
       }
       return { verified: false, status: data.status || 'PENDING' };
     } catch (err) {

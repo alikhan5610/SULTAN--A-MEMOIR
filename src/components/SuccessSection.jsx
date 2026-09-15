@@ -95,34 +95,73 @@ export default function SuccessSection() {
   const isPaid = activeOrder.status === 'PAID' && !!activeOrder.downloadToken;
   const isPending = activeOrder.status === 'PENDING';
   const isFailed = activeOrder.status === 'FAILED';
+  const isTestMode = Boolean(activeOrder.isTestMode);
 
   const downloadUrl = isPaid
     ? `/api/download?token=${encodeURIComponent(activeOrder.downloadToken)}&orderId=${encodeURIComponent(activeOrder.orderId)}`
     : null;
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!isPaid || !downloadUrl) {
       setDownloadError('Your payment has not been verified yet. Please wait or contact support.');
+      setDownloadSuccess(false);
       return;
     }
 
     setIsDownloading(true);
     setDownloadError('');
+    setDownloadSuccess(false);
 
     try {
-      // Trigger native browser download directly via dedicated endpoint
+      // Step 1: Request verified PDF binary from server
+      const response = await fetch(downloadUrl);
+
+      if (!response.ok) {
+        let errorMessage = 'Download failed. Please try again or contact support at 03108985387.';
+        try {
+          const errData = await response.json();
+          if (errData.message) errorMessage = errData.message;
+        } catch {}
+        setDownloadError(errorMessage);
+        setDownloadSuccess(false);
+        setIsDownloading(false);
+        return;
+      }
+
+      // Step 2: Validate content type
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('pdf') && !contentType.includes('octet-stream')) {
+        setDownloadError('Download failed. Server returned an invalid response format.');
+        setDownloadSuccess(false);
+        setIsDownloading(false);
+        return;
+      }
+
+      // Step 3: Receive full binary blob
+      const blob = await response.blob();
+      if (blob.size < 100000) {
+        setDownloadError('Download failed. Incomplete file received. Please contact support.');
+        setDownloadSuccess(false);
+        setIsDownloading(false);
+        return;
+      }
+
+      // Step 4: Trigger native browser file save from the verified blob
+      const objectUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = downloadUrl;
+      a.href = objectUrl;
       a.download = 'Sultan-A-Memoir-Wasim-Akram.pdf';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      setTimeout(() => window.URL.revokeObjectURL(objectUrl), 30000);
+
+      // Step 5: Mark success only after successful file transfer
       setDownloadSuccess(true);
     } catch (err) {
-      console.error('Direct download error:', err);
-      // Fallback: Open in new window
-      window.open(downloadUrl, '_blank');
-      setDownloadSuccess(true);
+      console.error('Download fetch error:', err);
+      setDownloadError('Download failed. Please check your network connection or contact support at 03108985387.');
+      setDownloadSuccess(false);
     } finally {
       setIsDownloading(false);
     }
@@ -134,7 +173,7 @@ export default function SuccessSection() {
     const res = await checkOrderVerification(activeOrder.orderId);
     setIsChecking(false);
     if (res && res.verified) {
-      setDownloadSuccess(true);
+      setDownloadSuccess(false);
     } else {
       setDownloadError('Your payment has not been verified yet. Please wait or contact support.');
     }
@@ -201,7 +240,7 @@ export default function SuccessSection() {
             )}
           </div>
 
-          {/* Status Label */}
+          {/* Status Label with Test Mode Notice if applicable */}
           <div
             style={{
               fontFamily: 'var(--font-sans)',
@@ -214,7 +253,9 @@ export default function SuccessSection() {
             }}
           >
             {isPaid
-              ? '✓ PAYMENT VERIFIED & UNLOCKED'
+              ? isTestMode
+                ? '✓ PAYMENT VERIFIED [TEST MODE — SIMULATED]'
+                : '✓ PAYMENT VERIFIED & UNLOCKED'
               : isFailed
               ? '✕ PAYMENT VERIFICATION FAILED'
               : '⏳ PAYMENT PENDING VERIFICATION'}
@@ -240,9 +281,16 @@ export default function SuccessSection() {
 
           {/* Subheading / Message */}
           {isPaid ? (
-            <p style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', color: 'var(--gold-bright)', marginBottom: '32px' }}>
-              <strong style={{ color: 'var(--ivory-white)' }}>SULTAN: A MEMOIR</strong> (Complete 191 Pages) is unlocked and ready for download.
-            </p>
+            <div>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', color: 'var(--gold-bright)', marginBottom: '16px' }}>
+                <strong style={{ color: 'var(--ivory-white)' }}>SULTAN: A MEMOIR</strong> (Complete 191 Pages) is unlocked and ready for download.
+              </p>
+              {isTestMode && (
+                <div style={{ background: 'rgba(212, 175, 55, 0.12)', border: '1px dashed var(--gold-border)', borderRadius: '6px', padding: '10px 14px', maxWidth: '560px', margin: '0 auto 24px', fontSize: '0.8rem', color: 'var(--gold-bright)' }}>
+                  <strong>[TEST MODE]</strong> Verified via manual administrator simulation. For real customer payments, JazzCash / EasyPaisa transfers into <strong>03108985387</strong> are confirmed against incoming receipts.
+                </div>
+              )}
+            </div>
           ) : (
             <div
               style={{
@@ -333,7 +381,7 @@ export default function SuccessSection() {
                   }}
                 >
                   <Download size={22} />
-                  <span>{isDownloading ? 'PREPARING PDF...' : 'DOWNLOAD SULTAN: A MEMOIR (191 PAGES)'}</span>
+                  <span>{isDownloading ? 'DOWNLOADING COMPLETE PDF...' : 'DOWNLOAD SULTAN: A MEMOIR (191 PAGES)'}</span>
                 </button>
 
                 {downloadUrl && (
@@ -360,7 +408,7 @@ export default function SuccessSection() {
 
                 {downloadSuccess && (
                   <p style={{ color: '#A2E26E', fontSize: '0.88rem', marginTop: '8px', fontWeight: 600 }}>
-                    ✓ Download initiated successfully! Enjoy the definitive story of Wasim Akram.
+                    ✓ Download completed successfully! Enjoy the definitive story of Wasim Akram.
                   </p>
                 )}
               </div>
