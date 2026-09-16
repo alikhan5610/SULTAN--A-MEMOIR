@@ -149,6 +149,16 @@
   }
 }
 
+/* Phone — tighten frame width so no horizontal overflow */
+@media (max-width: 767px) {
+  .wasim-stationary-frame {
+    width: 110vw !important;
+    left: 50% !important;
+    top: 0 !important;
+  }
+}
+
+
 /* ==========================================================================
    Hero Section Content Layout
    Editorial typography on the left, letting stationary Wasim shine through
@@ -315,4 +325,144 @@
 
 .glass-card:hover {
   border-color: rgba(212, 175, 55, 0.4);
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVE — Phones (≤ 767px)
+   All rules below ONLY apply on mobile. Desktop/laptop is completely untouched.
+   ========================================================================== */
+@media (max-width: 767px) {
+
+  /* --- Navbar --- */
+  .desktop-nav {
+    display: none !important;
+  }
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  /* --- Hero Section --- */
+  .hero-content-wrapper {
+    margin-top: 30vh;
+    text-align: center;
+  }
+  .hero-content-wrapper .hero-badge {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero-content-wrapper p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero-action-buttons {
+    justify-content: center;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hero-action-buttons .btn-gold,
+  .hero-action-buttons .btn-ghost {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* --- About Section — stack 12-col grid to 1 col --- */
+  .about-image-col {
+    grid-column: 1 / -1 !important;
+  }
+  .about-text-col {
+    grid-column: 1 / -1 !important;
+  }
+  #about .editorial-container > div:last-child {
+    grid-template-columns: 1fr !important;
+  }
+  /* Tactical pillars grid inside About (1fr 1fr → 1fr) */
+  .about-text-col > div:last-child {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* --- Legacy Section --- */
+  .legacy-grid-col {
+    grid-column: 1 / -1 !important;
+    grid-template-columns: 1fr !important;
+  }
+  .legacy-image-col {
+    grid-column: 1 / -1 !important;
+  }
+  #legacy .editorial-container > div:first-of-type + div {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* --- Book Showcase --- */
+  .book-showcase-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .book-cover-col {
+    grid-column: 1 / -1 !important;
+  }
+  .book-details-col {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* --- Footer --- */
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .footer-brand-col {
+    grid-column: 1 / -1 !important;
+  }
+  .footer-links-col {
+    grid-column: 1 / -1 !important;
+  }
+  .footer-support-col {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* --- Reduce section vertical padding on mobile --- */
+  #about,
+  #legacy,
+  #preview,
+  #quotes,
+  #creator-statement {
+    padding-top: 72px !important;
+    padding-bottom: 72px !important;
+  }
+  #the-book {
+    padding-top: 64px !important;
+    padding-bottom: 80px !important;
+  }
+
+  /* --- Glass card padding reduction --- */
+  .glass-card {
+    padding: 24px !important;
+  }
+
+  /* --- Creator editorial layout (EditorialQuote) --- */
+  .creator-editorial-layout {
+    grid-template-columns: 1fr !important;
+    text-align: center;
+  }
+
+  /* --- Section subtitle max-width on mobile --- */
+  .section-subtitle {
+    font-size: 1rem;
+    max-width: 100%;
+  }
+
+  /* --- Book detail buttons full width on mobile --- */
+  .book-details-col .btn-gold,
+  .book-details-col .btn-ghost {
+    flex: 1 1 100% !important;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* --- Hero stats: 2 columns instead of 4 on narrow screens --- */
+  #hero [style*="minmax(200px"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* --- Quotes section single column --- */
+  #quotes [style*="minmax(320px"] {
+    grid-template-columns: 1fr !important;
+  }
 }
