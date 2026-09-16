@@ -39,21 +39,7 @@ export default function BookTransition() {
           <span style={{ color: 'var(--gold-bright)' }}>THE MEMOIR</span>
         </div>
 
-        {/* Transition Culmination Heading */}
-        <h2
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(2.5rem, 6vw, 5rem)',
-            fontWeight: 900,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: 'var(--ivory-white)',
-            lineHeight: 1.1,
-            marginBottom: '20px'
-          }}
-        >
-          SULTAN: <span className="text-gold">A MEMOIR</span>
-        </h2>
+
 
         <p
           style={{
