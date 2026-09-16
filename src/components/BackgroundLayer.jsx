@@ -50,15 +50,18 @@ export default function BackgroundLayer() {
       }
 
       // ── Write directly to the DOM — zero React re-renders, zero jank ──
-      // On mobile/tablet (≤1024px) the CSS handles translate3d(-50%, Y, 0)
-      // via the --wasim-translate-y custom property. We clear any stale
-      // inline transform so the CSS rule always wins on narrow viewports.
-      frame.style.setProperty('--wasim-translate-y', `${translateY}px`);
+      //
+      // DESKTOP (> 1024px): simple vertical translate, frame stays right-anchored.
+      // MOBILE (≤ 1024px):  we write the FULL translate3d(-50%, Y, 0) as an
+      //   inline style. This is the critical fix for mobile jitter — we do NOT
+      //   use a CSS custom property (--wasim-translate-y) because updating a
+      //   CSS variable triggers a style-recalculation in mobile browsers, which
+      //   breaks compositor-only rendering and causes the bounce/jitter effect.
+      //   Writing the complete transform inline hits only the compositor layer.
       if (window.innerWidth > 1024) {
         frame.style.transform = `translate3d(0, ${translateY}px, 0)`;
       } else {
-        // Let CSS handle centering — only the custom property drives parallax
-        frame.style.transform = '';
+        frame.style.transform = `translate3d(-50%, ${translateY}px, 0)`;
       }
       frame.style.opacity = opacity;
 

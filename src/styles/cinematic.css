@@ -16,21 +16,26 @@
   background-color: var(--pk-green-pitch-black);
 }
 
-/* Massive Persistent Wasim Akram Frame — Extends through the full scroll experience */
+/* Massive Persistent Wasim Akram Frame
+   DESKTOP (> 1024px): right-anchored so his full body is visible in the
+   right half of the viewport. right:-8vw bleeds the far edge off-screen
+   (no dead white gap). Width 120vw — large & cinematic, not over-cropped.
+   JS drives: transform:translate3d(0, Y, 0) for smooth vertical parallax.
+   MOBILE (≤1024px): overridden below — centred, JS drives full transform. */
 .wasim-stationary-frame {
   position: absolute;
-  top: 35px;
-  right: clamp(-400px, -12vw, -80px);
-  width: clamp(1700px, 155vw, 2500px);
+  top: 0;
+  right: -8vw;
+  left: auto;
+  width: clamp(900px, 120vw, 1600px);
   aspect-ratio: 1 / 1;
   pointer-events: none;
   z-index: 1;
   will-change: transform, opacity;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  transform-style: preserve-3d;
-  /* NO transition — opacity & transform are driven frame-by-frame via JS.
-     Any CSS transition here causes the elastic "to-and-fro" bounce. */
+  /* NO transition — JS drives transform/opacity frame-by-frame.
+     Any CSS transition causes the elastic bounce artefact. */
 }
 
 /* Massive Wasim Figure Image — Scaled far beyond viewport so user scrolls through body */
@@ -131,14 +136,17 @@
   z-index: 1;
 }
 
-/* Mobile & Tablet Responsive Adjustments for Massive Persistent Background */
+/* Tablet & Mobile (≤ 1024px) — centred, JS drives full transform inline
+   JS writes translate3d(-50%, Y, 0) directly each rAF tick.
+   No CSS custom-property middleman = no extra style-recalculation = no jitter. */
 @media (max-width: 1024px) {
   .wasim-stationary-frame {
     width: clamp(800px, 160vw, 1100px);
     right: auto;
     left: 50%;
     top: 30px;
-    transform: translate3d(-50%, var(--wasim-translate-y, 0px), 0) !important;
+    /* Pre-JS fallback — JS overwrites this inline on first scroll/mount */
+    transform: translate3d(-50%, 0px, 0);
   }
   .wasim-stationary-img {
     object-position: top center;
@@ -154,19 +162,18 @@
   }
 }
 
-/* Phone — bigger frame, stays centred, no horizontal bleed */
+/* Phone (≤ 767px) — larger frame so Wasim fills the screen cinematic-ally.
+   JS continues to write full translate3d(-50%, Y, 0) inline each rAF tick. */
 @media (max-width: 767px) {
   .wasim-stationary-frame {
-    width: 155vw !important;
-    min-width: 380px !important;
-    left: 50% !important;
-    top: -20px !important;
+    width: 155vw;
+    min-width: 380px;
+    left: 50%;
+    top: -20px;
   }
-  /* On phones, use a wider opaque core so Wasim reads bigger & bolder */
   .wasim-stationary-img {
     mask-image: radial-gradient(ellipse at 50% 40%, black 55%, rgba(0,0,0,0.75) 74%, rgba(0,0,0,0.28) 90%, transparent 100%);
     -webkit-mask-image: radial-gradient(ellipse at 50% 40%, black 55%, rgba(0,0,0,0.75) 74%, rgba(0,0,0,0.28) 90%, transparent 100%);
-    /* Slightly brighter on mobile so he pops on small screens */
     filter: contrast(1.2) saturate(1.25) brightness(1.02);
   }
 }
