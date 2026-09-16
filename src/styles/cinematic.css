@@ -20,13 +20,17 @@
 .wasim-stationary-frame {
   position: absolute;
   top: 35px;
-  right: clamp(-300px, -10vw, -60px);
-  width: clamp(1400px, 135vw, 2100px);
+  right: clamp(-400px, -12vw, -80px);
+  width: clamp(1700px, 155vw, 2500px);
   aspect-ratio: 1 / 1;
   pointer-events: none;
   z-index: 1;
   will-change: transform, opacity;
-  transition: opacity 0.25s ease-out;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  /* NO transition — opacity & transform are driven frame-by-frame via JS.
+     Any CSS transition here causes the elastic "to-and-fro" bounce. */
 }
 
 /* Massive Wasim Figure Image — Scaled far beyond viewport so user scrolls through body */
@@ -36,11 +40,12 @@
   display: block;
   object-fit: cover;
   object-position: top center;
-  filter: contrast(1.15) saturate(1.16) brightness(0.96);
-  /* Atmospheric feathering at outer perimeter */
-  mask-image: radial-gradient(ellipse at 50% 48%, black 60%, rgba(0, 0, 0, 0.72) 80%, transparent 97%);
-  -webkit-mask-image: radial-gradient(ellipse at 50% 48%, black 60%, rgba(0, 0, 0, 0.72) 80%, transparent 97%);
+  filter: contrast(1.18) saturate(1.2) brightness(0.97);
+  /* Sharper mask — larger opaque centre so Wasim reads HD & in-focus */
+  mask-image: radial-gradient(ellipse at 50% 46%, black 52%, rgba(0, 0, 0, 0.80) 72%, rgba(0,0,0,0.35) 88%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 46%, black 52%, rgba(0, 0, 0, 0.80) 72%, rgba(0,0,0,0.35) 88%, transparent 100%);
 }
+
 
 /* Ambient backlight glow and rim lighting behind Wasim */
 .wasim-figure-feather {
@@ -129,7 +134,7 @@
 /* Mobile & Tablet Responsive Adjustments for Massive Persistent Background */
 @media (max-width: 1024px) {
   .wasim-stationary-frame {
-    width: clamp(650px, 145vw, 950px);
+    width: clamp(800px, 160vw, 1100px);
     right: auto;
     left: 50%;
     top: 30px;
@@ -149,14 +154,23 @@
   }
 }
 
-/* Phone — tighten frame width so no horizontal overflow */
+/* Phone — bigger frame, stays centred, no horizontal bleed */
 @media (max-width: 767px) {
   .wasim-stationary-frame {
-    width: 110vw !important;
+    width: 155vw !important;
+    min-width: 380px !important;
     left: 50% !important;
-    top: 0 !important;
+    top: -20px !important;
+  }
+  /* On phones, use a wider opaque core so Wasim reads bigger & bolder */
+  .wasim-stationary-img {
+    mask-image: radial-gradient(ellipse at 50% 40%, black 55%, rgba(0,0,0,0.75) 74%, rgba(0,0,0,0.28) 90%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 40%, black 55%, rgba(0,0,0,0.75) 74%, rgba(0,0,0,0.28) 90%, transparent 100%);
+    /* Slightly brighter on mobile so he pops on small screens */
+    filter: contrast(1.2) saturate(1.25) brightness(1.02);
   }
 }
+
 
 
 /* ==========================================================================
@@ -343,7 +357,7 @@
 
   /* --- Hero Section --- */
   .hero-content-wrapper {
-    margin-top: 30vh;
+    margin-top: 36vh;
     text-align: center;
   }
   .hero-content-wrapper .hero-badge {
